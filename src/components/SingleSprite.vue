@@ -13,10 +13,10 @@
 export default {
   data: () => {
     return {
-      size: 60,
+      size: 40,
       l: 100,
       r: 200,
-      light: 100,
+      light: 500,
     };
   },
   methods: {
@@ -28,8 +28,8 @@ export default {
       let canvas = document.getElementById("canvas");
       let ctx = canvas.getContext("2d");
 
-      let w = 12,
-        h = 12;
+      let w = 13,
+        h = 13;
       let imageData = ctx.createImageData(w, h);
 
       let setPixel = function (x, y, color) {
@@ -69,7 +69,8 @@ export default {
         g: rrand(10, 255),
         b: rrand(10, 255),
       };
-      let light = this.light / 25;
+
+      let light = this.light / 100;
 
       fillData(function (i, j, w, h) {
         let hullX = 1 - Math.abs(i - w / 2) / (w / 2);
@@ -77,12 +78,12 @@ export default {
         let hull = hullX * hullY * size * rrand(l, r);
 
         // TODO: coming soon, rotation of parts
-        // let hullcos = hull * Math.cos(i/w);
-        // let hullsin = hull * Math.sin(j/h);
-        // hull = hull * 0.5 + hullcos * 0.5;
-        // hull = hull * 0.5 + hullsin * 0.5;
+        let hullcos = hull * Math.cos(i / w);
+        let hullsin = hull * Math.sin(j / h);
+        hull = hull * 0.5 + hullcos * 0.5;
+        hull = hull * 0.5 + hullsin * 0.5;
 
-        if (hull < 0.12) {
+        if (hull < 0.1) {
           setPixel(i, j, CLEAR);
           return;
         }
@@ -95,7 +96,6 @@ export default {
           b: c * startColor.b,
         });
       });
-      let mirror = Math.random();
 
       let mirrorY = function () {
         fillData(function (i, j, w, h) {
@@ -116,6 +116,9 @@ export default {
         });
       };
 
+      // Mirror the image by chance
+      let mirror = Math.random();
+
       if (mirror > 0.5) {
         mirrorX();
         if (Math.random() < 0.2) {
@@ -127,24 +130,24 @@ export default {
           mirrorX();
         }
       }
-      if (Math.random() < 0.1) {
-        fillData(function (i, j, w, h) {
-          if (i < w / 2 || j < h / 2) {
-            setPixel(i, j, CLEAR);
-          } else {
-            setPixel(w - i, h - j, getPixel(i, j));
-          }
-        });
-      }
-      if (Math.random() < 0.1) {
-        fillData(function (i, j, w, h) {
-          if (i < w / 2 || j > h / 2) {
-            setPixel(i, j, CLEAR);
-          } else {
-            setPixel(w - i, h - j, getPixel(i, j));
-          }
-        });
-      }
+      // if (Math.random() < 0.1) {
+      //   fillData(function (i, j, w, h) {
+      //     if (i < w / 2 || j < h / 2) {
+      //       setPixel(i, j, CLEAR);
+      //     } else {
+      //       setPixel(w - i, h - j, getPixel(i, j));
+      //     }
+      //   });
+      // }
+      // if (Math.random() < 0.1) {
+      //   fillData(function (i, j, w, h) {
+      //     if (i < w / 2 || j > h / 2) {
+      //       setPixel(i, j, CLEAR);
+      //     } else {
+      //       setPixel(w - i, h - j, getPixel(i, j));
+      //     }
+      //   });
+      // }
 
       let isClear = function (color) {
         return (
@@ -183,7 +186,7 @@ canvas {
   image-rendering: -o-crisp-edges; /* OS X & Windows Opera (12.02+) */
   image-rendering: pixelated; /* Awesome future-browsers       */
   -ms-interpolation-mode: nearest-neighbor; /* IE                            */
-  width: 240px;
-  height: 240px;
+  width: 60px;
+  height: 60px;
 }
 </style>

@@ -13,7 +13,7 @@
 export default {
   data: () => {
     return {
-      size: 40,
+      size: 50,
       l: 100,
       r: 200,
       light: 500,
@@ -27,40 +27,49 @@ export default {
 
       let canvas = document.getElementById("canvas");
       let ctx = canvas.getContext("2d");
+      ctx.globalCompositeOperation = "copy";
+      ctx.globalAlpha = 10;
 
       let w = 13,
         h = 13;
       let imageData = ctx.createImageData(w, h);
 
-      let setPixel = function (x, y, color) {
+      let vec = [];
+
+      const setPixel = function (x, y, color) {
         let index = (x + y * imageData.width) * 4;
-        imageData.data[index + 0] = color.r;
-        imageData.data[index + 1] = color.g;
-        imageData.data[index + 2] = color.b;
-        imageData.data[index + 3] = color.a || 255;
+        vec[index + 0] = color.r;
+        vec[index + 1] = color.g;
+        vec[index + 2] = color.b;
+        vec[index + 3] = color.a;
       };
 
-      let getPixel = function (x, y) {
+      const getPixel = function (x, y) {
         let index = (x + y * imageData.width) * 4;
         return {
-          r: imageData.data[index + 0],
-          g: imageData.data[index + 1],
-          b: imageData.data[index + 2],
-          a: imageData.data[index + 3],
+          r: vec[index + 0],
+          g: vec[index + 1],
+          b: vec[index + 2],
+          a: vec[index + 3],
         };
       };
 
-      let fillData = function (fillFunc) {
-        for (let i = 0; i < w; i++) {
-          for (let j = 0; j < h; j++) {
+      const fillData = function (fillFunc) {
+        for (let j = 0; j < h; j++) {
+          for (let i = 0; i < w; i++) {
             fillFunc(i, j, w, h);
           }
         }
       };
 
       let CLEAR = { r: 127, g: 127, b: 127, a: 0 };
-      let BLACK = { r: 0, g: 0, b: 0 };
+      let BLACK = { r: 0, g: 0, b: 0, a: 255 };
 
+      fillData((x, y) => {
+        setPixel(x, y, CLEAR);
+      });
+
+      // TODO: Remove magic numbers
       let size = this.size / 25;
       let r = this.r / 1000;
       let l = this.l / 1000;
@@ -88,12 +97,13 @@ export default {
           return;
         }
 
-        let c = Math.tan(hull * light);
+        const c = Math.tan(hull * light);
 
         setPixel(i, j, {
           r: c * startColor.r,
           g: c * startColor.g,
           b: c * startColor.b,
+          a: 255,
         });
       });
 
@@ -159,12 +169,20 @@ export default {
       fillData(function (i, j) {
         if (
           !isClear(getPixel(i, j)) &&
+          // has a clear neigbor
           (isClear(getPixel(i + 1, j)) ||
             isClear(getPixel(i - 1, j)) ||
             isClear(getPixel(i, j + 1)) ||
             isClear(getPixel(i, j - 1)))
         ) {
           setPixel(i, j, BLACK);
+        }
+      });
+
+      fillData((x, y) => {
+        let index = (x + y * imageData.width) * 4;
+        for (let k = 0; k < 4; k++) {
+          imageData.data[index + k] = vec[index + k];
         }
       });
 

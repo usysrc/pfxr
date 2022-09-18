@@ -1,6 +1,6 @@
 # pfxr
 
-A pixel art sprite generator.
+A pixel art sprite generator. https://usysrc.dev/pfxr/
 
 ## Project setup
 

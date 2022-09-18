@@ -4,6 +4,7 @@
       <canvas id="canvas" width="12px" height="12px"> </canvas>
     </v-container>
     <v-container>
+      <v-btn @click="undo" :disabled="history.length <= 1">Undo</v-btn>
       <v-btn @click="generateSprite">Generate</v-btn>
     </v-container>
   </div>
@@ -13,13 +14,24 @@
 export default {
   data: () => {
     return {
+      history: [],
       size: 50,
       l: 100,
       r: 200,
       light: 500,
+      w: 12,
+      h: 12,
     };
   },
   methods: {
+    fillData(fillFunc) {
+      for (let j = 0; j < this.h; j++) {
+        for (let i = 0; i < this.w; i++) {
+          fillFunc(i, j, this.w, this.h);
+        }
+      }
+    },
+
     generateSprite() {
       let rrand = (a, b) => {
         return a + Math.random() * (b - a);
@@ -30,9 +42,7 @@ export default {
       ctx.globalCompositeOperation = "copy";
       ctx.globalAlpha = 10;
 
-      let w = 13,
-        h = 13;
-      let imageData = ctx.createImageData(w, h);
+      let imageData = ctx.createImageData(this.w, this.h);
 
       let vec = [];
 
@@ -54,18 +64,10 @@ export default {
         };
       };
 
-      const fillData = function (fillFunc) {
-        for (let j = 0; j < h; j++) {
-          for (let i = 0; i < w; i++) {
-            fillFunc(i, j, w, h);
-          }
-        }
-      };
-
       let CLEAR = { r: 127, g: 127, b: 127, a: 0 };
       let BLACK = { r: 0, g: 0, b: 0, a: 255 };
 
-      fillData((x, y) => {
+      this.fillData((x, y) => {
         setPixel(x, y, CLEAR);
       });
 
@@ -81,7 +83,7 @@ export default {
 
       let light = this.light / 100;
 
-      fillData(function (i, j, w, h) {
+      this.fillData(function (i, j, w, h) {
         let hullX = 1 - Math.abs(i - w / 2) / (w / 2);
         let hullY = 1 - Math.abs(j - h / 2) / (h / 2);
         let hull = hullX * hullY * size * rrand(l, r);
@@ -106,7 +108,7 @@ export default {
           a: 255,
         });
       });
-
+      const fillData = this.fillData;
       let mirrorY = function () {
         fillData(function (i, j, w, h) {
           if (j < h / 2) {
@@ -166,7 +168,7 @@ export default {
       };
 
       // Black outline
-      fillData(function (i, j) {
+      this.fillData(function (i, j) {
         if (
           !isClear(getPixel(i, j)) &&
           // has a clear neigbor
@@ -179,16 +181,33 @@ export default {
         }
       });
 
-      fillData((x, y) => {
+      this.fillData((x, y) => {
         let index = (x + y * imageData.width) * 4;
         for (let k = 0; k < 4; k++) {
           imageData.data[index + k] = vec[index + k];
         }
       });
+      this.history.push(vec);
+      ctx.putImageData(imageData, -1, -1);
+    },
 
+    undo() {
+      if (this.history.length <= 1) return;
+      this.history.pop();
+      let canvas = document.getElementById("canvas");
+      let ctx = canvas.getContext("2d");
+      let imageData = ctx.createImageData(this.w, this.h);
+      const vec = this.history[this.history.length - 1];
+      this.fillData((x, y) => {
+        let index = (x + y * imageData.width) * 4;
+        for (let k = 0; k < 4; k++) {
+          imageData.data[index + k] = vec[index + k];
+        }
+      });
       ctx.putImageData(imageData, -1, -1);
     },
   },
+
   mounted() {
     this.generateSprite();
   },
